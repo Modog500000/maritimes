@@ -36,7 +36,7 @@ public class Maritimes extends Game {
         CitySystem.register();
         RenderSystem.register();
         scheduleTick();
-        TradingSystem.money = 100000f;
+        TradingSystem.money = 100f;
 
         ShipSystem.register();
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("assets/fonts/PixelifySans-Regular.ttf"));

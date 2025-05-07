@@ -118,6 +118,19 @@ public class BoatMenu implements Screen, Clickable {
                 ship.setContinueOrders(false);
                 int index = ship.getOrders().indexOf(city);
                 prefix = String.valueOf(index + 1);
+                if (index == 0 && !ship.getOrders().isEmpty()) {
+                    City nextOrder = ship.getOrders().getFirst();
+                    boolean foundConnection = false;
+                    for (City.Connection connection : RenderSystem.viewCity.getConnections()) {
+                        if (connection.possibleToTraverse(nextOrder)) {
+                            foundConnection = true;
+                            break;
+                        }
+                    }
+                    if (!foundConnection) {
+                        color = Color.RED;
+                    }
+                }
                 if (ship.getOrders().size() > index + 1) {
                     City nextOrder = ship.getOrders().get(index + 1);
                     boolean foundConnection = false;
@@ -139,7 +152,7 @@ public class BoatMenu implements Screen, Clickable {
                 RenderSystem.batch.draw(trade, 20, bottom - 0.2f, 0.8f, 0.8f);
             }
 
-            RenderSystem.drawText(prefix + " " + city.getName(), -250f, y,color);
+            RenderSystem.drawText(prefix + " " + city.getName(), -250f, y, color);
             y -= 25;
         }
 
@@ -199,7 +212,7 @@ public class BoatMenu implements Screen, Clickable {
             } else {
                 RenderSystem.batch.draw(trade, 20, bottom - 0.2f, 0.8f, 0.8f);
             }
-            RenderSystem.drawText(prefix + " " + city.getName(), -250f, y,color);
+            RenderSystem.drawText(prefix + " " + city.getName(), -250f, y, color);
             y -= 25;
         }
     }

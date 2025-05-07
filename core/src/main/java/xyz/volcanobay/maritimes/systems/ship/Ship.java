@@ -276,7 +276,7 @@ public abstract class Ship implements Clickable {
     public void enter() {
         continueOrders = false;
         enterTimer = 160f;
-        satisfaction = 150f;
+        satisfaction = 100f;
         dockedAtHome = true;
         waiting = false;
         ShipSystem.shipPresent = true;

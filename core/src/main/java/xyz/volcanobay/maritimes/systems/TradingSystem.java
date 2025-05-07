@@ -26,11 +26,16 @@ public class TradingSystem {
         float x = 1;
         buttons.clear();
 
+        buttons.add(new Button(28,30,1,3));
+        buttons.getLast().setAnyAction(() -> {
+            RenderSystem.shipBuilder = true;
+        });
+
         for (Material material : MaterialSystem.materialList) {
             RenderSystem.batch.draw(material.getBoxTexture(), x, 12.5f, 1, 2);
             buttons.add(new Button(x, x + 1, 12.5f, 14.5f));
             buttons.getLast().setAnyAction(() -> {
-                if (money-material.getValue() > 0) {
+                if (money-material.getValue() >= 0) {
                     heldMaterial = material;
                     money -= heldMaterial.getValue();
                 }
@@ -59,7 +64,6 @@ public class TradingSystem {
                 for (Ship ship : ShipSystem.getShips()) {
                     if (InputSystem.mouseInBound(ship.getBounds())) {
                         if (!(ship.getWeight()+heldMaterial.getWeight() <= ship.getStorageSpace())) { break; }
-                        if (money-heldMaterial.getValue() < 0) { break; }
                         Supplies supplies = MaterialSystem.findMatchingSupplies(ship.getSuppliesList(),heldMaterial);
                         supplies.add(1);
                         droppedOnShip = true;
@@ -106,6 +110,7 @@ public class TradingSystem {
             for (Button button : buttons) {
                 if (InputSystem.mouseInBound(button)) {
                     button.leftClick();
+                    break;
                 }
             }
         }

@@ -1,29 +1,27 @@
 package xyz.volcanobay.maritimes.systems.ship;
 
-import xyz.volcanobay.maritimes.systems.city.City;
-
-public class CogShip extends Ship{
-    public CogShip(String name) {
+public class TreasureShip extends Ship{
+    public TreasureShip(String name) {
         super(name);
     }
 
     @Override
     public float getMaxSpeed() {
-        return 0.99f;
+        return 2f;
     }
 
     @Override
     public float getAcceleration() {
-        return 0.05f;
+        return 0.1f;
     }
 
     @Override
     public float getStorageSpace() {
-        return 35;
+        return 200;
     }
 
     @Override
     public int cost() {
-        return 4000;
+        return 30000;
     }
 }

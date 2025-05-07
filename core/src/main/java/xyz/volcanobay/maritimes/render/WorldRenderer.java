@@ -34,10 +34,18 @@ public class WorldRenderer {
     }
 
     public static void tick() {
-        waterFrame++;
+        if (DateSystem.season == DateSystem.Season.FALL || DateSystem.season == DateSystem.Season.WINTER) {
+            waterFrame++;
 
-        if (waterFrame > 59) {
-            waterFrame = 0;
+            if (waterFrame > 59) {
+                waterFrame = 0;
+            }
+        } else {
+            waterFrame--;
+
+            if (waterFrame <= 0) {
+                waterFrame = 59;
+            }
         }
     }
 

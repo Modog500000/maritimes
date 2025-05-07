@@ -12,10 +12,11 @@ public class MaterialSystem {
 
     public static final Material GOLD = registerMaterial(new Material("gold",5,240));
     public static final Material SILVER = registerMaterial(new Material("silver",5,80));
-    public static final Material FOOD = registerMaterial(new Material("food",1,1));
-    public static final Material SALT = registerMaterial(new Material("salt",2,2));
+    public static final Material FOOD = registerMaterial(new Material("food",1,5));
+    public static final Material SALT = registerMaterial(new Material("salt",2,10));
     public static final Material PEPPER = registerMaterial(new Material("pepper",2,92));
-    public static final Material CINNAMON = registerMaterial(new Material("cinnamon",2,4));
+    public static final Material CINNAMON = registerMaterial(new Material("cinnamon",2,40));
+    public static final Material PORCELAIN = registerMaterial(new Material("porcelain",2,140));
 
     private static Material registerMaterial(Material material) {
         materialList.add(material);

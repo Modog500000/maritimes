@@ -18,12 +18,20 @@ import xyz.volcanobay.maritimes.systems.TradingSystem;
 import xyz.volcanobay.maritimes.systems.city.City;
 import xyz.volcanobay.maritimes.systems.city.CitySystem;
 import xyz.volcanobay.maritimes.systems.input.Bounds;
+import xyz.volcanobay.maritimes.systems.ship.Ship;
+import xyz.volcanobay.maritimes.util.Mth;
+
+import java.awt.geom.Line2D;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiPredicate;
 
 public class RenderSystem {
     public static OrthographicCamera camera;
     public static SpriteBatch batch;
 
     public static boolean mapScreen = false;
+    public static boolean shipBuilder = false;
     private static float scroll = 0;
     private static float zoom = 5;
     private static Vector2 pos = new Vector2(40, 25);
@@ -33,6 +41,10 @@ public class RenderSystem {
     public static Texture debug = new Texture("assets/textures/screen/debug.png");
     public static Texture map = new Texture("assets/textures/screen/map.png");
     public static Texture marker = new Texture("assets/textures/screen/marker.png");
+    public static Texture build = new Texture("assets/textures/screen/build.png");
+
+    public static String viewShipName = "cog";
+    private static Ship viewShip = null;
 
     public static City viewCity;
 
@@ -71,19 +83,59 @@ public class RenderSystem {
             ScreenUtils.clear(0, 0, 0, 1);
 
             WorldRenderer.render(partialTicks);
-            TradingSystem.renderFirst(partialTicks);
-            ShipSystem.renderShips(batch);
+            if (!shipBuilder) {
+                TradingSystem.renderFirst(partialTicks);
+                ShipSystem.renderShips(batch);
 
-            UIRenderer.render(partialTicks);
-            if (Maritimes.debug) {
-                drawOutline(InputSystem.mouse.x - .5f, InputSystem.mouse.x + .5f, InputSystem.mouse.y - .5f, InputSystem.mouse.y + .5f, 0.1f);
+                UIRenderer.render(partialTicks);
+                batch.draw(build, 28, 1, 2, 2);
+                if (Maritimes.debug) {
+                    drawOutline(InputSystem.mouse.x - .5f, InputSystem.mouse.x + .5f, InputSystem.mouse.y - .5f, InputSystem.mouse.y + .5f, 0.1f);
+                }
+
+                Maritimes.INSTANCE.renderScreen(partialTicks);
+                TradingSystem.render(partialTicks);
+
+                if (!ShipSystem.shipsWaiting.isEmpty()) {
+                    batch.draw(marker, 28, 6, 2, 2);
+                    drawText(String.valueOf(ShipSystem.shipsWaiting.size()), 568, -60, Color.WHITE);
+                }
+            } else {
+                if (Gdx.input.isKeyJustPressed(Input.Keys.RIGHT)) {
+                    String picked = "cog";
+                    boolean pickNext = false;
+                    ArrayList<String> aMessIsWhatThisIs = new ArrayList<>();
+                    aMessIsWhatThisIs.addAll(ShipSystem.SHIP_REGISTRY.keySet());
+                    aMessIsWhatThisIs.addAll(ShipSystem.SHIP_REGISTRY.keySet());
+                    for (String name : aMessIsWhatThisIs) {
+                        if (pickNext) {
+                            picked = name;
+                            viewShip = null;
+                            break;
+                        }
+                        if (name == viewShipName) {
+                            pickNext = true;
+                        }
+                    }
+                    viewShipName = picked;
+                }
+                if (viewShip == null) {
+                    viewShip = ShipSystem.SHIP_REGISTRY.get(viewShipName).get();
+                }
+
+                viewShip.draw(batch, 15 - (viewShip.getBounds().right - viewShip.getBounds().left), 2, 10, false, true);
+
+                drawText(viewShip.cost() + "£", -500, -210, Color.WHITE);
+
+                UIRenderer.render(partialTicks);
+                batch.draw(build, 0, 1, 2, 2);
             }
-            Maritimes.INSTANCE.renderScreen(partialTicks);
-            TradingSystem.render(partialTicks);
         } else {
 
-            zoom += scroll / 10f;
-            zoom = Math.max(1, Math.min(zoom, 5));
+            List<Bounds> cityBounds = new ArrayList<>();
+
+            zoom += scroll / 15f;
+            zoom = Math.max(0.4f, Math.min(zoom, 5));
             scroll = scroll / 1.2f;
             camera.position.set(pos.x, pos.y, 0);
             camera.viewportHeight = 30 * (h / w);
@@ -102,10 +154,30 @@ public class RenderSystem {
             }
             pos.add(vel);
 
+
+
             renderMap(partialTicks);
+
+            for (City city : CitySystem.cities.values()) {
+                if (city.hidden)
+                    continue;
+                cityBounds.add(new Bounds(city.getPosition().x, city.getPosition().x + 1, city.getPosition().y, city.getPosition().y + 1));
+                if (InputSystem.mouseInBound(cityBounds.getLast())) {
+                    for (City.Connection connection : city.getConnections()) {
+                        batch.draw(marker, connection.city.getPosition().x-0.5f, connection.city.getPosition().y-0.5f, 2, 2);
+                    }
+                }
+            }
+
+            if (Maritimes.debug) {
+                for (Bounds bounds : cityBounds) {
+                    drawBounds(bounds);
+                }
+            }
 
             if (Maritimes.debug) {
                 drawText("X: " + InputSystem.getMouse().x + ", Y: " + InputSystem.getMouse().y, 0, 0);
+
             }
 
             camera.position.set(15, 15 * (h / w), 0);
@@ -113,6 +185,19 @@ public class RenderSystem {
             camera.zoom = Maritimes.debug ? 1.2f : 1;
             camera.update();
             batch.setProjectionMatrix(camera.combined);
+
+            Vector3 projected = camera.unproject(new Vector3(Gdx.input.getX(),Gdx.input.getY(),0));
+            int i = 0;
+            for (City city : CitySystem.cities.values()) {
+                if (city.hidden)
+                    continue;
+                Bounds bounds = cityBounds.get(i);
+                if (InputSystem.mouseInBound(bounds)) {
+                    drawText(city.getName(), Mth.map(projected.x, 0, 30, -600, 600), Mth.map(projected.y, 0, 26, -310, 740), Color.WHITE);
+                }
+                i++;
+            }
+
             UIRenderer.render(partialTicks);
 
             camera.position.set(pos.x, pos.y, 0);
@@ -131,10 +216,13 @@ public class RenderSystem {
     private static void renderMap(float partialTick) {
         batch.draw(map, 0, 0, 100, 100 * ((float) map.getHeight() / map.getWidth()));
 
+
+        ShipSystem.renderShips(batch);
         for (City city : CitySystem.cities.values()) {
+            if (city.hidden)
+                continue;
             batch.draw(marker, city.getPosition().x, city.getPosition().y, 1, 1);
         }
-        ShipSystem.renderShips(batch);
 
     }
 
@@ -157,7 +245,13 @@ public class RenderSystem {
     }
 
     public static void drawBounds(Bounds bounds) {
+        if (InputSystem.mouseInBound(bounds)) {
+            setColor(1f, 1f, 1f);
+        } else {
+            setColor(354 / 255f, 60 / 255f, 85 / 255f);
+        }
         drawOutline(bounds.left, bounds.right, bounds.bottom, bounds.top, 0.1f);
+        setColor(1f, 1f, 1f);
     }
 
     public static void drawBounds(Bounds bounds, float width) {

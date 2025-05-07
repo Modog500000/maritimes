@@ -28,6 +28,8 @@ public abstract class Ship implements Clickable {
     private List<City> returnOrders = new ArrayList<>();
     private List<City> usedOrders = new ArrayList<>();
     private List<City> usedReturnOrders = new ArrayList<>();
+    private List<City> unlocks = new ArrayList<>();
+    private List<City> tradeBlock = new ArrayList<>();
     private float satisfaction = 200f;
 
     private boolean barterFreely = false;
@@ -62,6 +64,7 @@ public abstract class Ship implements Clickable {
     }
 
     public void draw(SpriteBatch batch, float x, float y, float scale, boolean forceLeft, boolean forceRight) {
+        scale *= (texture.getWidth()/500f);
         viewX = x;
         viewY = y;
         if ((velocity.x < 0 || forceLeft) && !forceRight) {
@@ -158,9 +161,20 @@ public abstract class Ship implements Clickable {
     }
 
     public void attemptTrade(City city) {
+        tradeTimer--;
+        if (tradeBlock.contains(city)) {
+            tradeTimer = 0;
+            return;
+        }
         if (Math.random() > 0.8) {
             tradeTimer += 1.5f;
         }
+        for (City.Connection connection : city.getConnections()) {
+            if (connection.city.hidden && Math.random() > 0.75f) {
+                unlocks.add(connection.city);
+            }
+        }
+
         List<Supplies> buyable = new ArrayList<>();
         List<Supplies> sellable = new ArrayList<>();
 
@@ -234,8 +248,8 @@ public abstract class Ship implements Clickable {
             Supplies selling = sellable.getLast();
 
             float costDifference = (selling.getCalculatedValue() * selling.getCount()) / randomBuyable.getCalculatedValue();
-            float buyAmount = (float) Math.ceil(Math.max(1, costDifference));
-            float sellAmount = (randomBuyable.getCalculatedValue() * buyAmount) / (selling.getCalculatedValue());
+            float buyAmount = (float) Math.floor(Math.max(1, costDifference));
+            float sellAmount = (float) Math.ceil((randomBuyable.getCalculatedValue() * buyAmount) / (selling.getCalculatedValue()));
 
             if (sellAmount <= selling.getCount()) {
 
@@ -243,13 +257,12 @@ public abstract class Ship implements Clickable {
                 buyAmount *= Math.min(1, cancellation);
                 if (barterFreely) {
                     completeTrade(selling, (int) sellAmount, randomBuyable, (int) buyAmount);
-                } else if (cancellation >= 0) {
+                } else if (cancellation >= 1) {
                     completeTrade(selling, (int) sellAmount, randomBuyable, (int) buyAmount);
                 }
             }
         }
 
-        tradeTimer--;
     }
 
     public void setViewX(float viewX) {
@@ -265,12 +278,21 @@ public abstract class Ship implements Clickable {
         enterTimer = 160f;
         satisfaction = 150f;
         dockedAtHome = true;
+        waiting = false;
         ShipSystem.shipPresent = true;
+        for (City city : unlocks) {
+            city.hidden = false;
+        }
+        unlocks.clear();
     }
 
     public void queue() {
         ShipSystem.shipsWaiting.add(this);
         waiting = true;
+    }
+
+    public List<City> getTradeBlock() {
+        return tradeBlock;
     }
 
     private void completeTrade(Supplies sell, int sellAmount, Supplies buy, int buyAmount) {
@@ -287,6 +309,8 @@ public abstract class Ship implements Clickable {
     public float getEnterTimer() {
         return enterTimer;
     }
+
+    public abstract int cost();
 
     public float getExitTimer() {
         return exitTimer;
@@ -402,6 +426,8 @@ public abstract class Ship implements Clickable {
 
     @Override
     public void rightClick() {
-        Maritimes.INSTANCE.setScreen(new BoatMenu(this));
+        if (dockedAtHome) {
+            Maritimes.INSTANCE.setScreen(new BoatMenu(this));
+        }
     }
 }

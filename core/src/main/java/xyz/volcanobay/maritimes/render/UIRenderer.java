@@ -16,7 +16,7 @@ public class UIRenderer {
         RenderSystem.batch.draw(MONEY, 0, 0, 4, 1);
         RenderSystem.drawText(TradingSystem.money + "£", -560, -270,new Color(1,1,1,1));
         RenderSystem.batch.draw(DATE, 24, 0, 6, 1);
-        String text = ((int) Math.floor(DateSystem.getTimeUntilSeason()))+ " - " + DateSystem.season.name();
+        String text = ((int) Math.floor(31-DateSystem.getTimeUntilSeason()))+ " - " + DateSystem.season.name();
         RenderSystem.drawText(text, 520-(text.length()*10), -270,new Color(1,1,1,1));
     }
 }

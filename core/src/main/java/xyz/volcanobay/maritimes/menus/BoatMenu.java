@@ -25,8 +25,11 @@ public class BoatMenu implements Screen, Clickable {
     private List<Button> boundsList = new ArrayList<>();
     private Page page = Page.TRIP;
 
-    public Texture background = new Texture("assets/textures/screen/boat_background.png");
-    public Texture selector = new Texture("assets/textures/screen/selector.png");
+    public static Texture background = new Texture("assets/textures/screen/boat_background.png");
+    public static Texture selector = new Texture("assets/textures/screen/selector.png");
+
+    public static Texture trade = new Texture("assets/textures/screen/trade.png");
+    public static Texture no_trade = new Texture("assets/textures/screen/no_trade.png");
 
     public BoatMenu(Ship ship) {
         this.ship = ship;
@@ -66,7 +69,7 @@ public class BoatMenu implements Screen, Clickable {
         });
 
         RenderSystem.drawText("trip     return  stock", -200f, 220);
-        RenderSystem.drawText("Sail!", 160f, 220,new Color(0.4f,1,0.4f,1));
+        RenderSystem.drawText("Sail!", 160f, 220, new Color(0.4f, 1, 0.4f, 1));
 
         if (page == Page.TRIP) {
             renderTrip();
@@ -95,19 +98,48 @@ public class BoatMenu implements Screen, Clickable {
             float mouseY = Mth.map(y, -178, 190, 3.3f, 12.4f);
             float bottom = Mth.map(y - 30f, -178, 190, 3.3f, 12.4f);
             boundsList.add(new Button(8, 22, bottom, mouseY));
-            boundsList.getLast().setAnyAction(() -> {
+            boundsList.getLast().setLeftAction(() -> {
                 if (ship.getOrders().contains(city)) {
                     ship.getOrders().remove(city);
                 } else {
                     ship.getOrders().add(city);
                 }
             });
+            boundsList.getLast().setRightAction(() -> {
+                if (!ship.getTradeBlock().contains(city)) {
+                    ship.getTradeBlock().add(city);
+                } else {
+                    ship.getTradeBlock().remove(city);
+                }
+            });
+            Color color = new Color(65 / 255f, 30 / 255f, 5 / 255f, 255 / 255f);
             String prefix = "X";
             if (ship.getOrders().contains(city)) {
                 ship.setContinueOrders(false);
-                prefix = String.valueOf(ship.getOrders().indexOf(city) + 1);
+                int index = ship.getOrders().indexOf(city);
+                prefix = String.valueOf(index + 1);
+                if (ship.getOrders().size() > index + 1) {
+                    City nextOrder = ship.getOrders().get(index + 1);
+                    boolean foundConnection = false;
+                    for (City.Connection connection : city.getConnections()) {
+                        if (connection.possibleToTraverse(nextOrder)) {
+                            foundConnection = true;
+                            break;
+                        }
+                    }
+                    if (!foundConnection) {
+                        color = Color.RED;
+                    }
+                }
             }
-            RenderSystem.drawText(prefix + " " + city.getName(), -250f, y);
+
+            if (ship.getTradeBlock().contains(city)) {
+                RenderSystem.batch.draw(no_trade, 20, bottom - 0.2f, 0.8f, 0.8f);
+            } else {
+                RenderSystem.batch.draw(trade, 20, bottom - 0.2f, 0.8f, 0.8f);
+            }
+
+            RenderSystem.drawText(prefix + " " + city.getName(), -250f, y,color);
             y -= 25;
         }
 
@@ -128,19 +160,46 @@ public class BoatMenu implements Screen, Clickable {
             float mouseY = Mth.map(y, -178, 190, 3.3f, 12.4f);
             float bottom = Mth.map(y - 30f, -178, 190, 3.3f, 12.4f);
             boundsList.add(new Button(8, 22, bottom, mouseY));
-            boundsList.getLast().setAnyAction(() -> {
+            boundsList.getLast().setLeftAction(() -> {
                 if (ship.getReturnOrders().contains(city)) {
                     ship.getReturnOrders().remove(city);
                 } else {
                     ship.getReturnOrders().add(city);
                 }
             });
+            boundsList.getLast().setRightAction(() -> {
+                if (!ship.getTradeBlock().contains(city)) {
+                    ship.getTradeBlock().add(city);
+                } else {
+                    ship.getTradeBlock().remove(city);
+                }
+            });
 
+            Color color = new Color(65 / 255f, 30 / 255f, 5 / 255f, 255 / 255f);
             String prefix = "X";
             if (ship.getReturnOrders().contains(city)) {
-                prefix = String.valueOf(ship.getReturnOrders().indexOf(city) + 1);
+                int index = ship.getReturnOrders().indexOf(city);
+                prefix = String.valueOf(index + 1);
+                if (ship.getReturnOrders().size() > index + 1) {
+                    City nextOrder = ship.getReturnOrders().get(index + 1);
+                    boolean foundConnection = false;
+                    for (City.Connection connection : city.getConnections()) {
+                        if (connection.possibleToTraverse(nextOrder)) {
+                            foundConnection = true;
+                            break;
+                        }
+                    }
+                    if (!foundConnection) {
+                        color = Color.RED;
+                    }
+                }
             }
-            RenderSystem.drawText(prefix + " " + city.getName(), -250f, y);
+            if (ship.getTradeBlock().contains(city)) {
+                RenderSystem.batch.draw(no_trade, 20, bottom - 0.2f, 0.8f, 0.8f);
+            } else {
+                RenderSystem.batch.draw(trade, 20, bottom - 0.2f, 0.8f, 0.8f);
+            }
+            RenderSystem.drawText(prefix + " " + city.getName(), -250f, y,color);
             y -= 25;
         }
     }
@@ -148,9 +207,9 @@ public class BoatMenu implements Screen, Clickable {
     public void renderStock() {
         float y = 11.3f;
         for (Supplies supplies : ship.getSuppliesList()) {
-            float textY = Mth.map(y+0.9f, 3.3f, 12.4f, -178, 190);
+            float textY = Mth.map(y + 0.9f, 3.3f, 12.4f, -178, 190);
 
-            boundsList.add(new Button(8.5f, 9.5f, y, y+1));
+            boundsList.add(new Button(8.5f, 9.5f, y, y + 1));
             boundsList.getLast().setLeftAction(() -> {
                 if (supplies.getCount() > 0) {
                     if (TradingSystem.getHeldMaterial() == null) {
@@ -162,35 +221,35 @@ public class BoatMenu implements Screen, Clickable {
             boundsList.getLast().setRightAction(() -> {
                 if (supplies.getCount() > 0) {
                     if (TradingSystem.getHeldMaterial() == null) {
-                        TradingSystem.sellMaterial(supplies.getMaterial(),supplies.getCount());
+                        TradingSystem.sellMaterial(supplies.getMaterial(), supplies.getCount());
                         supplies.add(-supplies.getCount());
                     }
                 }
             });
-            boundsList.add(new Button(9.5f, 13, y, y+1));
+            boundsList.add(new Button(9.5f, 13, y, y + 1));
             boundsList.getLast().setAnyAction(() -> {
                 supplies.buy = !supplies.buy;
             });
-            boundsList.add(new Button(13, 18, y, y+1));
+            boundsList.add(new Button(13, 18, y, y + 1));
             boundsList.getLast().setAnyAction(() -> {
                 supplies.sell = !supplies.sell;
             });
-            RenderSystem.drawText("["+(supplies.buy ? "Y" : "N") +"] BUY",-200f,textY);
-            RenderSystem.drawText("["+(supplies.sell ? "Y" : "N") +"] SELL",-40,textY);
-            RenderSystem.drawText(String.valueOf(supplies.getCount()),180,textY);
-            RenderSystem.batch.draw(supplies.getMaterial().getItemTexture(),8.5f,y,1f,1f);
+            RenderSystem.drawText("[" + (supplies.buy ? "Y" : "N") + "] BUY", -200f, textY);
+            RenderSystem.drawText("[" + (supplies.sell ? "Y" : "N") + "] SELL", -40, textY);
+            RenderSystem.drawText(String.valueOf(supplies.getCount()), 180, textY);
+            RenderSystem.batch.draw(supplies.getMaterial().getItemTexture(), 8.5f, y, 1f, 1f);
             y -= 1;
         }
-        RenderSystem.drawText(ship.getWeight()+"/"+ship.getStorageSpace(),-240,-180);
+        RenderSystem.drawText(ship.getWeight() + "/" + ship.getStorageSpace(), -240, -180);
         boundsList.add(new Button(15f, 22f, 2.2f, 3.5f));
-        boundsList.getLast().setAnyAction(() ->{
+        boundsList.getLast().setAnyAction(() -> {
             ship.setBarterFreely(!ship.isBarterFreely());
         });
-        Color color = InputSystem.mouseInBound(boundsList.getLast()) ? new Color(95/255f,60/255f,35/255f,255/255f) : new Color(65/255f,30/255f,5/255f,255/255f);
+        Color color = InputSystem.mouseInBound(boundsList.getLast()) ? new Color(95 / 255f, 60 / 255f, 35 / 255f, 255 / 255f) : new Color(65 / 255f, 30 / 255f, 5 / 255f, 255 / 255f);
         if (ship.isBarterFreely()) {
-            RenderSystem.drawText("Barter Freely",60,-180,color);
+            RenderSystem.drawText("Barter Freely", 60, -180, color);
         } else {
-            RenderSystem.drawText("Barter Strictly",25,-180,color);
+            RenderSystem.drawText("Barter Strictly", 25, -180, color);
         }
     }
 

@@ -36,7 +36,7 @@ public class Maritimes extends Game {
         CitySystem.register();
         RenderSystem.register();
         scheduleTick();
-        TradingSystem.money = 1000f;
+        TradingSystem.money = 100f;
 
         ShipSystem.register();
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("assets/fonts/PixelifySans-Regular.ttf"));
@@ -76,6 +76,7 @@ public class Maritimes extends Game {
             } else {
                 INSTANCE.setScreen(null);
             }
+            RenderSystem.shipBuilder = false;
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
             debug = !debug;
@@ -91,7 +92,7 @@ public class Maritimes extends Game {
                 clickable.rightClick();
             }
         } else {
-            if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
                 TradingSystem.leftClick();
             }
             ShipSystem.input();

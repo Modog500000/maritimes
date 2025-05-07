@@ -10,6 +10,7 @@ import xyz.volcanobay.maritimes.systems.city.CitySystem;
 import xyz.volcanobay.maritimes.systems.input.Bounds;
 import xyz.volcanobay.maritimes.systems.ship.CogShip;
 import xyz.volcanobay.maritimes.systems.ship.Ship;
+import xyz.volcanobay.maritimes.systems.ship.TreasureShip;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,7 +18,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class ShipSystem {
-    private static final HashMap<String, Supplier<Ship>> SHIP_REGISTRY = new HashMap<>();
+    public static final HashMap<String, Supplier<Ship>> SHIP_REGISTRY = new HashMap<>();
 
     private static List<Ship> ships = new ArrayList<>();
     public static List<Ship> shipsWaiting = new ArrayList<>();
@@ -25,7 +26,7 @@ public class ShipSystem {
     public static boolean shipPresent = false;
 
     public static final Supplier<Ship> COG = registerShip(() -> new CogShip("cog"));
-    public static final Supplier<Ship> TREASURE_SHIP = registerShip(() -> new CogShip("treasure_ship"));
+    public static final Supplier<Ship> TREASURE_SHIP = registerShip(() -> new TreasureShip("treasure_ship"));
 
     public static void register() {
         addShip(COG.get());
@@ -88,6 +89,16 @@ public class ShipSystem {
                 }
                 if (Gdx.input.isButtonPressed(Input.Buttons.RIGHT)) {
                     ship.rightClick();
+                }
+            }
+        }
+
+        if (InputSystem.mouseInBound(new Bounds(0,2,1,3))) {
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                Ship ship = ShipSystem.SHIP_REGISTRY.get(RenderSystem.viewShipName).get();
+                if (TradingSystem.money >= ship.cost()) {
+                    addShip(ship);
+                    TradingSystem.money -= ship.cost();
                 }
             }
         }
